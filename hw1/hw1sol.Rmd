@@ -1,6 +1,6 @@
 ---
 title: "Biostat 203B Homework 1"
-author: Hua Zhou
+author: Alvin Wang
 subtitle: Due Jan 22 @ 11:59PM
 output: html_document
 ---
@@ -40,7 +40,15 @@ Please, do **not** put these data files into Git; they are big. Do **not** copy 
 
     Use Bash commands to answer following questions.
 
-3. Display the contents in the folders `core`, `hosp`, `icu`. What are the functionalities of the bash commands `zcat`, `zless`, `zmore`, and `zgrep`? 
+3. Display the contents in the folders `core`, `hosp`, `icu`. What are the functionalities of the bash commands `zcat`, `zless`, `zmore`, and `zgrep`?  
+```{bash, eval=F}
+ls -l /usr/203b-data/mimic-iv/*
+```
+
+`zcat` is  for viewing the contents of a compressed file without literally uncompressing it.  
+`zless` is a filter which allows examination of compressed or plain text files one screenful at a time.  
+`zmore` command pauses after each screenful, printing --More-- at the bottom of the screen.  
+`zgrep` command is used to search out expressions from a given a file even if it is compressed. 
 
 4. What's the output of following bash script?
     ```{bash, eval=F}
@@ -50,8 +58,34 @@ Please, do **not** put these data files into Git; they are big. Do **not** copy 
       done
     ```
 Display the number of lines in each data file using a similar loop.
+    ```{bash, eval=F}
+    for datafile in /usr/203b-data/mimic-iv/core/*.gz
+      do
+        wc -l $datafile
+      done
+    ```
 
 4. Display the first few lines of `admissions.csv.gz`. How many rows are in this data file? How many unique patients (identified by `subject_id`) are in this data file? What are the possible values taken by each of the variable `admission_type`, `admission_location`, `insurance`, `language`, `marital_status`, and `ethnicity`? Also report the count for each unique value of these variables. (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `uniq`, `wc`, and so on.)
+```{bash, eval=F}
+zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | head
+#rows count
+tail -n +2 /usr/203b-data/mimic-iv/core/admissions.csv.gz | wc -l
+#number of unique patients
+zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F ',' '{ print $1 }' | sort | uniq | wc -l
+#possible values and their counts for `admission_type`
+zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F ',' '{ print $6 }' | sort | uniq -c
+#possible values and their counts for `admission_location`
+zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F ',' '{ print $7 }' | sort | uniq -c
+#possible values and their counts for `insurance`
+zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F ',' '{ print $9 }' | sort | uniq -c
+#possible values and their counts for `language`
+zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F ',' '{ print $10 }' | sort | uniq -c
+#possible values and their counts for `marital_status`
+zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F ',' '{ print $11 }' | sort | uniq -c
+#possible values and their counts for `ethnicity`
+zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F ',' '{ print $12 }' | sort | uniq -c
+```
+
 
 ## Q3. Who's popular in Price and Prejudice
 
@@ -60,6 +94,13 @@ Display the number of lines in each data file using a similar loop.
     curl http://www.gutenberg.org/cache/epub/42671/pg42671.txt > pride_and_prejudice.txt
     ```
 Do **not** put this text file `pride_and_prejudice.txt` in Git. Using a `for` loop, how would you tabulate the number of times each of the four characters is mentioned?
+```{bash, eval=F}
+  for char in {'Elizabeth','Jane','Lydia','Darcy'}
+    do
+      grep -o $char pride_and_prejudice.txt | wc -l
+    done
+```
+
 
 2. What's the difference between the following two commands?
     ```{bash eval=FALSE}
@@ -69,6 +110,9 @@ Do **not** put this text file `pride_and_prejudice.txt` in Git. Using a `for` lo
     ```{bash eval=FALSE}
     echo 'hello, world' >> test2.txt
     ```
+`>` writes 'hello, world' to test1.txt.  
+`>>` appends 'hello, world' to test2.txt.
+
 
 3. Using your favorite text editor (e.g., `vi`), type the following and save the file as `middle.sh`:
     ```{bash eval=FALSE}
@@ -82,7 +126,27 @@ Using `chmod` make the file executable by the owner, and run
     ./middle.sh pride_and_prejudice.txt 20 5
     ```
 Explain the output. Explain the meaning of `"$1"`, `"$2"`, and `"$3"` in this shell script. Why do we need the first line of the shell script?
+Output is the line 16-20 of pride_and_prejudice.txt. (Last 5 lines of the first 20 lines.)  
+$1 takes the first argument, which is the file name here.  
+$2 takes the second argument, which is the number of end line. (head -n)  
+$3 takes the third argument, which is the number of last lines. (tail)  
 
 ### Q4. More fun with Linux
 
 Try these commands in Bash and interpret the results: `cal`, `cal 2021`, `cal 9 1752` (anything unusual?), `date`, `hostname`, `arch`, `uname -a`, `uptime`, `who am i`, `who`, `w`, `id`, `last | head`, `echo {con,pre}{sent,fer}{s,ed}`, `time sleep 5`, `history | tail`.
+`cal` prints the calender of current month.  
+`cal 2021` prints the calender of the whole year.  
+`cal 9 1752` prints the calender of September 1752. Notice today is not marked because it was in the past.  
+`date` prints the current date and time.  
+`hostname` prints the current host name.  
+`arch` prints the computer architecture.  
+`uname -a` prints system information and information about the machine and operating system it is run on.  
+`uptime` dsplays the time since the last boot.  
+`who am i` displays current user.  
+`who` print who is currently logged in.  
+`w` displays information about currently logged in users and what each user is doing.  
+`id` displays information about user id.  
+`last | head` displays user logging history.  
+`echo {con,pre}{sent,fer}{s,ed}` prints all the permutations of the the three pairs.  
+`time sleep 5` pauses execution for 5 seconds.  
+`history | tail` reports the last few commands.  
