@@ -33,7 +33,7 @@ sessionInfo()
 1. This exercise (and later in this course) uses the [MIMIC-IV data](https://mimic-iv.mit.edu), a freely accessible critical care database developed by the MIT Lab for Computational Physiology. Follow the instructions at <https://mimic-iv.mit.edu/docs/access/> to (1) complete the CITI `Data or Specimens Only Research` course and (2) obtain the PhysioNet credential for using the MIMIC-IV data. Display the verification links to your completion report and completion certificate here. (Hint: The CITI training takes a couple hours and the PhysioNet credentialing takes a couple days; do not leave it to the last minute.)
 
 2. The `/usr/203b-data/mimic-iv/` folder on teaching server contains data sets from MIMIC-IV. Refer to <https://mimic-iv.mit.edu/docs/datasets/> for details of data files.  
-    ```{bash, eval=F}
+    ```{bash}
     ls -l /usr/203b-data/mimic-iv
     ```
 Please, do **not** put these data files into Git; they are big. Do **not** copy them into your directory. Do **not** decompress the gz data files. These create unnecessary big files on storage and are not big data friendly practices. Just read from the data folder `/usr/203b-data/mimic-iv` directly in following exercises. 
@@ -41,7 +41,7 @@ Please, do **not** put these data files into Git; they are big. Do **not** copy 
     Use Bash commands to answer following questions.
 
 3. Display the contents in the folders `core`, `hosp`, `icu`. What are the functionalities of the bash commands `zcat`, `zless`, `zmore`, and `zgrep`?  
-```{bash, eval=F}
+```{bash}
 ls -l /usr/203b-data/mimic-iv/*
 ```
 
@@ -51,14 +51,14 @@ ls -l /usr/203b-data/mimic-iv/*
 `zgrep` command is used to search out expressions from a given a file even if it is compressed. 
 
 4. What's the output of following bash script?
-    ```{bash, eval=F}
+    ```{bash}
     for datafile in /usr/203b-data/mimic-iv/core/*.gz
       do
         ls -l $datafile
       done
     ```
 Display the number of lines in each data file using a similar loop.
-    ```{bash, eval=F}
+    ```{bash}
     for datafile in /usr/203b-data/mimic-iv/core/*.gz
       do
         wc -l $datafile
@@ -66,35 +66,61 @@ Display the number of lines in each data file using a similar loop.
     ```
 
 4. Display the first few lines of `admissions.csv.gz`. How many rows are in this data file? How many unique patients (identified by `subject_id`) are in this data file? What are the possible values taken by each of the variable `admission_type`, `admission_location`, `insurance`, `language`, `marital_status`, and `ethnicity`? Also report the count for each unique value of these variables. (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `uniq`, `wc`, and so on.)
-```{bash, eval=F}
+```{bash}
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | head
+```
+
+```{bash}
 #rows count
 tail -n +2 /usr/203b-data/mimic-iv/core/admissions.csv.gz | wc -l
+```
+
+```{bash}
 #number of unique patients
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | awk -F ',' '{ print $1 }' | sort | uniq | wc -l
+```
+
+```{bash}
 #possible values and their counts for `admission_type`
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F ',' '{ print $6 }' | sort | uniq -c
+```
+
+```{bash}
 #possible values and their counts for `admission_location`
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F ',' '{ print $7 }' | sort | uniq -c
+```
+
+```{bash}
 #possible values and their counts for `insurance`
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F ',' '{ print $9 }' | sort | uniq -c
+```
+
+```{bash}
 #possible values and their counts for `language`
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F ',' '{ print $10 }' | sort | uniq -c
+```
+
+```{bash}
 #possible values and their counts for `marital_status`
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F ',' '{ print $11 }' | sort | uniq -c
+```
+
+```{bash}
 #possible values and their counts for `ethnicity`
 zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F ',' '{ print $12 }' | sort | uniq -c
 ```
 
 
+
+
 ## Q3. Who's popular in Price and Prejudice
 
 1. You and your friend just have finished reading *Pride and Prejudice* by Jane Austen. Among the four main characters in the book, Elizabeth, Jane, Lydia, and Darcy, your friend thinks that Darcy was the most mentioned. You, however, are certain it was Elizabeth. Obtain the full text of the novel from <http://www.gutenberg.org/cache/epub/42671/pg42671.txt> and save to your local folder. 
-    ```{bash, eval=FALSE}
+    ```{bash}
     curl http://www.gutenberg.org/cache/epub/42671/pg42671.txt > pride_and_prejudice.txt
     ```
 Do **not** put this text file `pride_and_prejudice.txt` in Git. Using a `for` loop, how would you tabulate the number of times each of the four characters is mentioned?
-```{bash, eval=F}
+```{bash}
   for char in {'Elizabeth','Jane','Lydia','Darcy'}
     do
       grep -o $char pride_and_prejudice.txt | wc -l
@@ -126,6 +152,14 @@ Using `chmod` make the file executable by the owner, and run
     ./middle.sh pride_and_prejudice.txt 20 5
     ```
 Explain the output. Explain the meaning of `"$1"`, `"$2"`, and `"$3"` in this shell script. Why do we need the first line of the shell script?
+```{bash eval=FALSE}
+
+Author: Jane Austen
+
+Editor: R. W. (Robert William) Chapman
+
+```
+
 Output is the line 16-20 of pride_and_prejudice.txt. (Last 5 lines of the first 20 lines.)  
 $1 takes the first argument, which is the file name here.  
 $2 takes the second argument, which is the number of end line. (head -n)  
