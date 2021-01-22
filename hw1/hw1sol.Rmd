@@ -30,7 +30,9 @@ sessionInfo()
 
 ## Q2. Linux Shell Commands
 
-1. This exercise (and later in this course) uses the [MIMIC-IV data](https://mimic-iv.mit.edu), a freely accessible critical care database developed by the MIT Lab for Computational Physiology. Follow the instructions at <https://mimic-iv.mit.edu/docs/access/> to (1) complete the CITI `Data or Specimens Only Research` course and (2) obtain the PhysioNet credential for using the MIMIC-IV data. Display the verification links to your completion report and completion certificate here. (Hint: The CITI training takes a couple hours and the PhysioNet credentialing takes a couple days; do not leave it to the last minute.)
+1. This exercise (and later in this course) uses the [MIMIC-IV data](https://mimic-iv.mit.edu), a freely accessible critical care database developed by the MIT Lab for Computational Physiology. Follow the instructions at <https://mimic-iv.mit.edu/docs/access/> to (1) complete the CITI `Data or Specimens Only Research` course and (2) obtain the PhysioNet credential for using the MIMIC-IV data. Display the verification links to your completion report and completion certificate here. (Hint: The CITI training takes a couple hours and the PhysioNet credentialing takes a couple days; do not leave it to the last minute.)  
+[CITI completion report](https://www.citiprogram.org/verify/?kb31c0f6e-150c-4078-bb91-4ebf632e8e20-40374259)  
+[CITI completion certificate](https://www.citiprogram.org/verify/?w4e9cfcc0-217a-4601-a4a1-882c6077063f-40374259)
 
 2. The `/usr/203b-data/mimic-iv/` folder on teaching server contains data sets from MIMIC-IV. Refer to <https://mimic-iv.mit.edu/docs/datasets/> for details of data files.  
     ```{bash}
@@ -169,18 +171,66 @@ $3 takes the third argument, which is the number of last lines. (tail)
 
 Try these commands in Bash and interpret the results: `cal`, `cal 2021`, `cal 9 1752` (anything unusual?), `date`, `hostname`, `arch`, `uname -a`, `uptime`, `who am i`, `who`, `w`, `id`, `last | head`, `echo {con,pre}{sent,fer}{s,ed}`, `time sleep 5`, `history | tail`.
 `cal` prints the calender of current month.  
-`cal 2021` prints the calender of the whole year.  
+```{bash}
+cal
+```
+`cal 2021` prints the calender of the whole year. 
+```{bash}
+cal 2021
+```
 `cal 9 1752` prints the calender of September 1752. Notice today is not marked because it was in the past.  
+```{bash}
+cal 9 1752
+```
 `date` prints the current date and time.  
+```{bash}
+date
+```
 `hostname` prints the current host name.  
-`arch` prints the computer architecture.  
+```{bash}
+hostname
+```
+`arch` prints the computer architecture. 
+```{bash}
+arch
+```
 `uname -a` prints system information and information about the machine and operating system it is run on.  
+```{bash}
+uname -a
+```
 `uptime` dsplays the time since the last boot.  
-`who am i` displays current user.  
+```{bash}
+uptime
+```
+`who am i` displays current user. 
+```{bash}
+who am i
+```
 `who` print who is currently logged in.  
+```{bash}
+who
+```
 `w` displays information about currently logged in users and what each user is doing.  
-`id` displays information about user id.  
-`last | head` displays user logging history.  
+```{bash}
+w
+```
+`id` displays information about user id. 
+```{bash}
+id
+```
+`last | head` displays user logging history.
+```{bash}
+last | head
+```
 `echo {con,pre}{sent,fer}{s,ed}` prints all the permutations of the the three pairs.  
-`time sleep 5` pauses execution for 5 seconds.  
+```{bash}
+echo {con,pre}{sent,fer}{s,ed}
+```
+`time sleep 5` pauses execution for 5 seconds. 
+```{bash}
+time sleep 5
+```
 `history | tail` reports the last few commands.  
+```{bash}
+history | tail
+```

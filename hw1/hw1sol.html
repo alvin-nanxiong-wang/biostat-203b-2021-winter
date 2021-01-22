@@ -395,7 +395,8 @@ summary {
 <div id="q2.-linux-shell-commands" class="section level2">
 <h2>Q2. Linux Shell Commands</h2>
 <ol style="list-style-type: decimal">
-<li><p>This exercise (and later in this course) uses the <a href="https://mimic-iv.mit.edu">MIMIC-IV data</a>, a freely accessible critical care database developed by the MIT Lab for Computational Physiology. Follow the instructions at <a href="https://mimic-iv.mit.edu/docs/access/" class="uri">https://mimic-iv.mit.edu/docs/access/</a> to (1) complete the CITI <code>Data or Specimens Only Research</code> course and (2) obtain the PhysioNet credential for using the MIMIC-IV data. Display the verification links to your completion report and completion certificate here. (Hint: The CITI training takes a couple hours and the PhysioNet credentialing takes a couple days; do not leave it to the last minute.)</p></li>
+<li><p>This exercise (and later in this course) uses the <a href="https://mimic-iv.mit.edu">MIMIC-IV data</a>, a freely accessible critical care database developed by the MIT Lab for Computational Physiology. Follow the instructions at <a href="https://mimic-iv.mit.edu/docs/access/" class="uri">https://mimic-iv.mit.edu/docs/access/</a> to (1) complete the CITI <code>Data or Specimens Only Research</code> course and (2) obtain the PhysioNet credential for using the MIMIC-IV data. Display the verification links to your completion report and completion certificate here. (Hint: The CITI training takes a couple hours and the PhysioNet credentialing takes a couple days; do not leave it to the last minute.) <a href="https://www.citiprogram.org/verify/?kb31c0f6e-150c-4078-bb91-4ebf632e8e20-40374259">CITI completion report:</a><br />
+<a href="https://www.citiprogram.org/verify/?w4e9cfcc0-217a-4601-a4a1-882c6077063f-40374259">CITI completion certificate</a></p></li>
 <li><p>The <code>/usr/203b-data/mimic-iv/</code> folder on teaching server contains data sets from MIMIC-IV. Refer to <a href="https://mimic-iv.mit.edu/docs/datasets/" class="uri">https://mimic-iv.mit.edu/docs/datasets/</a> for details of data files.</p>
 <pre class="bash"><code>ls -l /usr/203b-data/mimic-iv</code></pre>
 <pre><code>## total 12
@@ -548,8 +549,8 @@ zcat /usr/203b-data/mimic-iv/core/admissions.csv.gz | tail -n +2 | awk -F &#39;,
 ##                                  Dload  Upload   Total   Spent    Left  Speed
 ## 
  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
- 0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
-100  708k  100  708k    0     0   653k      0  0:00:01  0:00:01 --:--:--  653k</code></pre>
+ 1  708k    1 13793    0     0  53003      0  0:00:13 --:--:--  0:00:13 52846
+100  708k  100  708k    0     0   615k      0  0:00:01  0:00:01 --:--:--  616k</code></pre>
 <p>Do <strong>not</strong> put this text file <code>pride_and_prejudice.txt</code> in Git. Using a <code>for</code> loop, how would you tabulate the number of times each of the four characters is mentioned?</p></li>
 </ol>
 <pre class="bash"><code>  for char in {&#39;Elizabeth&#39;,&#39;Jane&#39;,&#39;Lydia&#39;,&#39;Darcy&#39;}
@@ -587,22 +588,112 @@ $2 takes the second argument, which is the number of end line. (head -n)<br />
 $3 takes the third argument, which is the number of last lines. (tail)</p>
 <div id="q4.-more-fun-with-linux" class="section level3">
 <h3>Q4. More fun with Linux</h3>
-<p>Try these commands in Bash and interpret the results: <code>cal</code>, <code>cal 2021</code>, <code>cal 9 1752</code> (anything unusual?), <code>date</code>, <code>hostname</code>, <code>arch</code>, <code>uname -a</code>, <code>uptime</code>, <code>who am i</code>, <code>who</code>, <code>w</code>, <code>id</code>, <code>last | head</code>, <code>echo {con,pre}{sent,fer}{s,ed}</code>, <code>time sleep 5</code>, <code>history | tail</code>. <code>cal</code> prints the calender of current month.<br />
-<code>cal 2021</code> prints the calender of the whole year.<br />
-<code>cal 9 1752</code> prints the calender of September 1752. Notice today is not marked because it was in the past.<br />
-<code>date</code> prints the current date and time.<br />
-<code>hostname</code> prints the current host name.<br />
-<code>arch</code> prints the computer architecture.<br />
-<code>uname -a</code> prints system information and information about the machine and operating system it is run on.<br />
-<code>uptime</code> dsplays the time since the last boot.<br />
-<code>who am i</code> displays current user.<br />
-<code>who</code> print who is currently logged in.<br />
-<code>w</code> displays information about currently logged in users and what each user is doing.<br />
-<code>id</code> displays information about user id.<br />
-<code>last | head</code> displays user logging history.<br />
-<code>echo {con,pre}{sent,fer}{s,ed}</code> prints all the permutations of the the three pairs.<br />
-<code>time sleep 5</code> pauses execution for 5 seconds.<br />
-<code>history | tail</code> reports the last few commands.</p>
+<p>Try these commands in Bash and interpret the results: <code>cal</code>, <code>cal 2021</code>, <code>cal 9 1752</code> (anything unusual?), <code>date</code>, <code>hostname</code>, <code>arch</code>, <code>uname -a</code>, <code>uptime</code>, <code>who am i</code>, <code>who</code>, <code>w</code>, <code>id</code>, <code>last | head</code>, <code>echo {con,pre}{sent,fer}{s,ed}</code>, <code>time sleep 5</code>, <code>history | tail</code>. <code>cal</code> prints the calender of current month.</p>
+<pre class="bash"><code>cal</code></pre>
+<pre><code>##     January 2021    
+## Su Mo Tu We Th Fr Sa
+##                 1  2
+##  3  4  5  6  7  8  9
+## 10 11 12 13 14 15 16
+## 17 18 19 20 21 22 23
+## 24 25 26 27 28 29 30
+## 31</code></pre>
+<p><code>cal 2021</code> prints the calender of the whole year.</p>
+<pre class="bash"><code>cal 2021</code></pre>
+<pre><code>##                                2021                               
+## 
+##        January               February                 March       
+## Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa
+##                 1  2       1  2  3  4  5  6       1  2  3  4  5  6
+##  3  4  5  6  7  8  9    7  8  9 10 11 12 13    7  8  9 10 11 12 13
+## 10 11 12 13 14 15 16   14 15 16 17 18 19 20   14 15 16 17 18 19 20
+## 17 18 19 20 21 22 23   21 22 23 24 25 26 27   21 22 23 24 25 26 27
+## 24 25 26 27 28 29 30   28                     28 29 30 31
+## 31
+##         April                   May                   June        
+## Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa
+##              1  2  3                      1          1  2  3  4  5
+##  4  5  6  7  8  9 10    2  3  4  5  6  7  8    6  7  8  9 10 11 12
+## 11 12 13 14 15 16 17    9 10 11 12 13 14 15   13 14 15 16 17 18 19
+## 18 19 20 21 22 23 24   16 17 18 19 20 21 22   20 21 22 23 24 25 26
+## 25 26 27 28 29 30      23 24 25 26 27 28 29   27 28 29 30
+##                        30 31
+##         July                  August                September     
+## Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa
+##              1  2  3    1  2  3  4  5  6  7             1  2  3  4
+##  4  5  6  7  8  9 10    8  9 10 11 12 13 14    5  6  7  8  9 10 11
+## 11 12 13 14 15 16 17   15 16 17 18 19 20 21   12 13 14 15 16 17 18
+## 18 19 20 21 22 23 24   22 23 24 25 26 27 28   19 20 21 22 23 24 25
+## 25 26 27 28 29 30 31   29 30 31               26 27 28 29 30
+## 
+##        October               November               December      
+## Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa   Su Mo Tu We Th Fr Sa
+##                 1  2       1  2  3  4  5  6             1  2  3  4
+##  3  4  5  6  7  8  9    7  8  9 10 11 12 13    5  6  7  8  9 10 11
+## 10 11 12 13 14 15 16   14 15 16 17 18 19 20   12 13 14 15 16 17 18
+## 17 18 19 20 21 22 23   21 22 23 24 25 26 27   19 20 21 22 23 24 25
+## 24 25 26 27 28 29 30   28 29 30               26 27 28 29 30 31
+## 31</code></pre>
+<p><code>cal 9 1752</code> prints the calender of September 1752. Notice today is not marked because it was in the past.</p>
+<pre class="bash"><code>cal 9 1752</code></pre>
+<pre><code>##    September 1752   
+## Su Mo Tu We Th Fr Sa
+##        1  2 14 15 16
+## 17 18 19 20 21 22 23
+## 24 25 26 27 28 29 30</code></pre>
+<p><code>date</code> prints the current date and time.</p>
+<pre class="bash"><code>date</code></pre>
+<pre><code>## Fri Jan 22 20:28:56 UTC 2021</code></pre>
+<p><code>hostname</code> prints the current host name.</p>
+<pre class="bash"><code>hostname</code></pre>
+<pre><code>## ucla-biostat-203b</code></pre>
+<p><code>arch</code> prints the computer architecture.</p>
+<pre class="bash"><code>arch</code></pre>
+<pre><code>## x86_64</code></pre>
+<p><code>uname -a</code> prints system information and information about the machine and operating system it is run on.</p>
+<pre class="bash"><code>uname -a</code></pre>
+<pre><code>## Linux ucla-biostat-203b 3.10.0-1160.6.1.el7.x86_64 #1 SMP Tue Nov 17 13:59:11 UTC 2020 x86_64 x86_64 x86_64 GNU/Linux</code></pre>
+<p><code>uptime</code> dsplays the time since the last boot.</p>
+<pre class="bash"><code>uptime</code></pre>
+<pre><code>##  20:28:56 up 18 days, 22:39,  2 users,  load average: 0.25, 0.25, 0.22</code></pre>
+<p><code>who am i</code> displays current user.</p>
+<pre class="bash"><code>who am i</code></pre>
+<p><code>who</code> print who is currently logged in.</p>
+<pre class="bash"><code>who</code></pre>
+<pre><code>## zhaofan1996 pts/1        2021-01-22 19:50 (cpe-76-91-16-146.socal.res.rr.com)
+## filipovicmilan271 pts/7        2021-01-21 06:03 (110.3.236.35.bc.googleusercontent.com)</code></pre>
+<p><code>w</code> displays information about currently logged in users and what each user is doing.</p>
+<pre class="bash"><code>w</code></pre>
+<pre><code>##  20:28:56 up 18 days, 22:39,  2 users,  load average: 0.25, 0.25, 0.22
+## USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+## zhaofan1 pts/1    cpe-76-91-16-146 19:50    8.00s  0.03s  0.03s -bash
+## filipovi pts/7    110.3.236.35.bc. Thu06   38:19m  0.06s  0.06s -bash</code></pre>
+<p><code>id</code> displays information about user id.</p>
+<pre class="bash"><code>id</code></pre>
+<pre><code>## uid=1032(alvinw) gid=1034(alvinw) groups=1034(alvinw) context=system_u:system_r:initrc_t:s0</code></pre>
+<p><code>last | head</code> displays user logging history.</p>
+<pre class="bash"><code>last | head</code></pre>
+<pre><code>## yingyanw pts/9        s-164-67-81-105. Fri Jan 22 19:54 - 19:56  (00:01)    
+## zhaofan1 pts/1        cpe-76-91-16-146 Fri Jan 22 19:50   still logged in   
+## zianzhua pts/8        110.88.97.219    Fri Jan 22 18:22 - 18:25  (00:03)    
+## angelica pts/8        cpe-108-185-43-2 Fri Jan 22 17:54 - 18:16  (00:22)    
+## zhaofan1 pts/1        cpe-76-91-16-146 Fri Jan 22 17:05 - 19:50  (02:45)    
+## angelica pts/11       ucla-biostat-203 Fri Jan 22 06:59 - 07:15  (00:16)    
+## zhaofan1 pts/8        cpe-76-91-16-146 Fri Jan 22 06:40 - 07:01  (00:21)    
+## angelica pts/0        cpe-108-185-43-2 Fri Jan 22 06:35 - 07:15  (00:39)    
+## linyuzho pts/8        s-169-232-70-224 Fri Jan 22 06:10 - 06:13  (00:02)    
+## angelica pts/0        cpe-108-185-43-2 Fri Jan 22 05:33 - 06:35  (01:01)</code></pre>
+<p><code>echo {con,pre}{sent,fer}{s,ed}</code> prints all the permutations of the the three pairs.</p>
+<pre class="bash"><code>echo {con,pre}{sent,fer}{s,ed}</code></pre>
+<pre><code>## consents consented confers confered presents presented prefers prefered</code></pre>
+<p><code>time sleep 5</code> pauses execution for 5 seconds.</p>
+<pre class="bash"><code>time sleep 5</code></pre>
+<pre><code>## 
+## real 0m5.003s
+## user 0m0.002s
+## sys  0m0.000s</code></pre>
+<p><code>history | tail</code> reports the last few commands.</p>
+<pre class="bash"><code>history | tail</code></pre>
 </div>
 </div>
 
