@@ -1,0 +1,230 @@
+---
+title: "Biostat 203B Homework 2"
+author: Alvin Wang
+subtitle: Due Feb 5 @ 11:59PM
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4 
+---
+
+Display machine information for reproducibility:
+```{r}
+sessionInfo()
+```
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE, cache.lazy = FALSE)
+library(tidyverse)
+library(data.table)
+library(lubridate)
+```
+
+```{r}
+os <- sessionInfo()$running
+if (str_detect(os, "Linux")) {
+  mimic_path <- "/usr/203b-data/mimic-iv"
+} else if (str_detect(os, "macOS")) {
+  mimic_path <- "/Users/huazhou/Documents/Box Sync/MIMIC/mimic-iv-0.4"
+}
+```
+
+Use tidyverse (ggpot2, dplyr) to explore the [MIMIC-IV](https://mimic-iv.mit.edu) data introduced in [homework 1](https://ucla-biostat203b-2021winter.github.io/hw/hw1/hw1.html).
+
+```{r}
+system(str_c("tree -s -L 2 ", shQuote(mimic_path)), intern = TRUE)
+```
+
+## Q1. PhysioNet credential
+
+At this moment, you should already get credentialed on the PhysioNet. Please include a screenshot of your `Data Use Agreement for the MIMIC-IV (v0.4)`.
+
+![](/home/alvinw/biostat-203b-2021-winter/hw2/credential.png)
+
+## Q2. `read.csv` (base R) vs `read_csv` (tidyverse) vs `fread` (data.table)
+
+There are quite a few utilities in R for reading data files. Let us test the speed of reading a moderate sized compressed csv file, `admissions.csv.gz`, by three programs: `read.csv` in base R, `read_csv` in tidyverse, and `fread` in the popular data.table package. Is there any speed difference?
+
+In this homework, we stick to the tidyverse. 
+```{r}
+#read.csv
+start_time <- Sys.time()
+read.csv(file = '/usr/203b-data/mimic-iv/core/admissions.csv.gz')
+end_time <- Sys.time()
+
+end_time - start_time
+```
+
+```{r}
+#read_csv
+start_time <- Sys.time()
+read_csv(file = '/usr/203b-data/mimic-iv/core/admissions.csv.gz')
+end_time <- Sys.time()
+
+end_time - start_time
+```
+
+```{r}
+#fread
+start_time <- Sys.time()
+fread(file = '/usr/203b-data/mimic-iv/core/admissions.csv.gz')
+end_time <- Sys.time()
+
+end_time - start_time
+```
+
+
+## Q3. ICU stays
+
+`icustays.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/icu/icustays/>) contains data about Intensive Care Units (ICU) stays. Summarize following variables using appropriate numerics or graphs:   
+
+
+```{r}
+icu <- read_csv(file = '/usr/203b-data/mimic-iv/icu/icustays.csv.gz')
+```
+- how many unique `stay_id`?  
+```{r}
+nrow(distinct(icu,stay_id))
+```
+
+- how many unique `subject_id`?  
+```{r}
+nrow(distinct(icu,subject_id))
+```
+
+- length of ICU stay  
+```{r}
+#TODO
+#TODO
+#TODO
+summarise(icu,los)
+```
+
+- first ICU unit
+```{r}
+arrange(icu, intime) %>% head(1)
+```
+
+- last ICU unit  
+```{r}
+arrange(icu, desc(intime)) %>% head(1)
+```
+
+## Q4. `admission` data
+
+Information of the patients admitted into hospital is available in `admissions.csv.gz`. See <https://mimic-iv.mit.edu/docs/datasets/core/admissions/> for details of each field in this file. Summarize following variables using appropriate graphs. Explain any patterns you observe.   
+
+```{r}
+adm <- read_csv(file = '/usr/203b-data/mimic-iv/core/admissions.csv.gz')
+```
+
+- admission year  
+```{r}
+adm$admyear <- as.numeric(substr(adm$admittime, 1, 4))
+ggplot(data = adm) + 
+      geom_bar(mapping = aes(x = admyear))
+```
+
+- admission month 
+```{r}
+adm$admmonth <- as.numeric(substr(adm$admittime, 6, 7))
+ggplot(data = adm) + 
+    geom_bar(mapping = aes(x = admmonth, fill = admmonth)) +
+    scale_x_discrete(name ="admission month", 
+                     limits=month.abb)
+```
+
+- admission month day  
+```{r}
+adm$admday <- as.numeric(substr(adm$admittime, 9, 10))
+ggplot(data = adm) + 
+    geom_bar(mapping = aes(x = admday, fill = admday)) +
+    scale_x_discrete(name ="admission month day", 
+                     limits=seq(1,31,by=1))
+```
+- admission week day  
+```{r}
+adm$weekday <- weekdays(adm$admittime)
+ggplot(data = adm) + 
+    geom_bar(mapping = aes(x = weekday, fill = weekday))
+```
+- admission hour (anything unusual?)  
+From the graph we can see that the most people were admitted in the evening and 
+the least was adimitted in the early morning.
+```{r}
+adm$admhour <- as.numeric(substr(adm$admittime, 12, 13))
+ggplot(data = adm) + 
+    geom_bar(mapping = aes(x = admhour, fill = admhour)) +
+    scale_x_discrete(name ="admission hour", 
+                     limits=seq(0,23,by=1))
+```
+- number of deaths in each year 
+```{r}
+adm$deathyear <- as.numeric(substr(adm$deathtime, 1, 4))
+ggplot(data = adm) + 
+      geom_bar(mapping = aes(x = deathyear))
+```
+- admission type 
+```{r}
+ggplot(data = adm) + 
+      geom_bar(mapping = aes(x = admission_type)) +
+      scale_x_discrete(guide = guide_axis(n.dodge=3))
+```
+
+- number of admissions per patient  
+```{r}
+sub <- as.data.frame(table(adm$subject_id))
+admFreq <- as.data.frame(table(sub$Freq))
+```
+
+```{r}
+ggplot(data = admFreq) + 
+      geom_bar(mapping = aes(x = Var1))
+```
+
+- admission location  
+- discharge location  
+- insurance  
+- language  
+- martial status  
+- ethnicity  
+- death 
+
+Note it is possible that one patient (uniquely identified by the `subject_id`) is admitted into hospital multiple times. When summarizing some demographic information, it makes sense to summarize based on unique patients. 
+
+## Q5. `patient` data
+
+Explore `patients.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/core/patients/>) and summarize following variables using appropriate numerics and graphs:  
+
+- `gender`  
+- `anchor_age` (explain pattern you see)
+
+## Q6. Lab results
+
+`labevents.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/hosp/labevents/>) contains all laboratory measurements for patients. 
+
+We are interested in the lab measurements of creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), glucose (50931), magnesium (50960), calcium (50893), and lactate (50813). Find the `itemid`s of these lab measurements from `d_labitems.csv.gz` and retrieve a subset of `labevents.csv.gz` only containing these items.
+
+## Q7. Vitals from chartered events
+
+We are interested in the vitals for ICU patients: heart rate, mean and systolic blood pressure (invasive and noninvasive measurements combined), body temperature, SpO2, and respiratory rate. Find the `itemid`s of these vitals from `d_items.csv.gz` and retrieve a subset of `chartevents.csv.gz` only containing these items.
+
+`chartevents.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/icu/chartevents/>) contains all the charted data available for a patient. During their ICU stay, the primary repository of a patient’s information is their electronic chart. The `itemid` variable indicates a single measurement type in the database. The `value` variable is the value measured for `itemid`.
+
+`d_items.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/icu/d_items/>) is the dictionary for the `itemid` in `chartevents.csv.gz`. 
+
+## Q8. Putting things together
+
+Let us create a tibble for all ICU stays, where rows are  
+
+- first ICU stay of each unique patient  
+- adults (age at admission > 18)  
+
+and columns contain at least following variables  
+
+- all variables in `icustays.csv.gz`  
+- all variables in `admission.csv.gz`  
+- all variables in `patients.csv.gz`  
+- first lab measurements during ICU stay  
+- first vitals measurement during ICU stay  
+- an indicator variable whether the patient died within 30 days of hospital admission  
