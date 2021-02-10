@@ -1,7 +1,7 @@
 ---
 title: "Biostat 203B Homework 2"
 author: Alvin Wang
-subtitle: Due Feb 5 @ 11:59PM
+subtitle: Due Feb 12 @ 11:59PM
 output: 
   html_document:
     toc: true
@@ -23,9 +23,9 @@ library(lubridate)
 ```{r}
 os <- sessionInfo()$running
 if (str_detect(os, "Linux")) {
-  mimic_path <- "/usr/203b-data/mimic-iv"
+  mimic_path <- "/usr/203b-data/mimic-iv/"
 } else if (str_detect(os, "macOS")) {
-  mimic_path <- "/Users/huazhou/Documents/Box Sync/MIMIC/mimic-iv-0.4"
+  mimic_path <- "/Users/alvin/Documents/WI21/203B/mimic-iv/"
 }
 ```
 
@@ -39,7 +39,7 @@ system(str_c("tree -s -L 2 ", shQuote(mimic_path)), intern = TRUE)
 
 At this moment, you should already get credentialed on the PhysioNet. Please include a screenshot of your `Data Use Agreement for the MIMIC-IV (v0.4)`.
 
-![](/home/alvinw/biostat-203b-2021-winter/hw2/credential.png)
+![](/Users/alvin/Documents/WI21/203B/biostat-203b-2021-winter/hw2/credential.png)
 
 ## Q2. `read.csv` (base R) vs `read_csv` (tidyverse) vs `fread` (data.table)
 
@@ -80,7 +80,7 @@ end_time - start_time
 
 
 ```{r}
-icu <- read_csv(file = '/usr/203b-data/mimic-iv/icu/icustays.csv.gz')
+icu <- read_csv(file = str_c(mimic_path, 'icustays.csv.gz'))
 ```
 - how many unique `stay_id`?  
 ```{r}
@@ -94,20 +94,28 @@ nrow(distinct(icu,subject_id))
 
 - length of ICU stay  
 ```{r}
-#TODO
-#TODO
-#TODO
-summarise(icu,los)
+icu %>%	
+	ggplot() + 
+	geom_histogram(mapping = aes(x = log(los))) +
+  labs(x = "Length of stay (log(days))")
 ```
 
 - first ICU unit
 ```{r}
-arrange(icu, intime) %>% head(1)
+icu %>%
+  select(first_careunit) %>%
+  ggplot(aes(x = first_careunit)) +
+  geom_bar(mapping = aes(fill = first_careunit)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
 
 - last ICU unit  
 ```{r}
-arrange(icu, desc(intime)) %>% head(1)
+icu %>%
+  select(last_careunit) %>%
+  ggplot(aes(x = last_careunit)) +
+  geom_bar(mapping = aes(fill = last_careunit)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
 
 ## Q4. `admission` data
@@ -115,7 +123,7 @@ arrange(icu, desc(intime)) %>% head(1)
 Information of the patients admitted into hospital is available in `admissions.csv.gz`. See <https://mimic-iv.mit.edu/docs/datasets/core/admissions/> for details of each field in this file. Summarize following variables using appropriate graphs. Explain any patterns you observe.   
 
 ```{r}
-adm <- read_csv(file = '/usr/203b-data/mimic-iv/core/admissions.csv.gz')
+adm <- read_csv(file = str_c(mimic_path, 'admissions.csv.gz'))
 ```
 
 - admission year  
@@ -198,12 +206,37 @@ Explore `patients.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/core/patients
 
 - `gender`  
 - `anchor_age` (explain pattern you see)
+```{r}
+patient <- read_csv(file = str_c(mimic_path, 'patients.csv.gz'))
+```
+
 
 ## Q6. Lab results
 
 `labevents.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/hosp/labevents/>) contains all laboratory measurements for patients. 
 
 We are interested in the lab measurements of creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), glucose (50931), magnesium (50960), calcium (50893), and lactate (50813). Find the `itemid`s of these lab measurements from `d_labitems.csv.gz` and retrieve a subset of `labevents.csv.gz` only containing these items.
+```{r}
+#mimic_p <- "/usr/203b-data/mimic-iv-derived-data/"
+#mimic_p <- "/Users/alvin/Documents/WI21/203B/mimic-iv/"
+
+if(!file.exists("labevents_icustays.csv.gz")){
+  system.time(labevents_tab <- 
+                fread(str_c(mimic_path, "labevents_filtered_itemid.csv.gz")) %>%
+                    rename(subject_id = V1, hadm_id = V2, itemid = V3, 
+                           charttime = V4, valuenum = V5))
+  labevents_tab %>%
+    semi_join(icu, by = c("subject_id", "hadm_id")) %>%
+    fwrite("labevents_icustays.csv.gz")
+}
+
+system.time(labevents_tab <- fread("labevents_icustays.csv.gz"))
+labevents_tab %>%
+  as.tibble() %>%
+  print(width = Inf)
+```
+
+
 
 ## Q7. Vitals from chartered events
 
@@ -212,6 +245,26 @@ We are interested in the vitals for ICU patients: heart rate, mean and systolic 
 `chartevents.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/icu/chartevents/>) contains all the charted data available for a patient. During their ICU stay, the primary repository of a patient’s information is their electronic chart. The `itemid` variable indicates a single measurement type in the database. The `value` variable is the value measured for `itemid`.
 
 `d_items.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/icu/d_items/>) is the dictionary for the `itemid` in `chartevents.csv.gz`. 
+
+```{r}
+#mimic_p <- "/usr/203b-data/mimic-iv-derived-data/"
+#mimic_p <- "/Users/alvin/Documents/WI21/203B/mimic-iv/"
+if(!file.exists("chartevents_icustays.csv.gz")){
+  system.time(chart_tab <- 
+                fread(str_c(mimic_path, "chartevents_filtered_itemid.csv.gz")) %>%
+                    rename(subject_id = V1, hadm_id = V2, stay_id = V3, 
+                           charttime = V4, itemid = V5, valuenum = V6))
+  
+  chart_tab %>%
+    semi_join(icu, by = c("subject_id", "hadm_id")) %>%
+    fwrite("chartevents_icustays.csv.gz")
+}
+
+system.time(chart_tab <- fread("chartevents_icustays.csv.gz"))
+chart_tab %>%
+  as.tibble() %>%
+  print(width = Inf)
+```
 
 ## Q8. Putting things together
 
@@ -227,4 +280,91 @@ and columns contain at least following variables
 - all variables in `patients.csv.gz`  
 - first lab measurements during ICU stay  
 - first vitals measurement during ICU stay  
-- an indicator variable whether the patient died within 30 days of hospital admission  
+- an indicator variable whether the patient died within 30 days of hospital admission 
+
+```{r}
+icu_uniq <- icu %>%
+#Filter first ICU stay of each unique patient
+  group_by(subject_id) %>%
+  slice_min(intime) %>%
+#Add in admissions
+  left_join(adm, by = c("subject_id", "hadm_id")) %>%
+#Add in patients
+  left_join(patient, by = c("subject_id")) %>% 
+#Filter age > 18
+  mutate(age = year(admittime) - anchor_year + anchor_age) %>%
+  filter(age >= 18) %>%
+  select(-age) %>%
+#Add death indicator whether patient died within 30 days of admission
+  mutate(d_within30 = ifelse(deathtime - intime <= 30, "Yes", "No")) %>% print()
+```
+
+
+```{r}
+#Match itemid with labels from dictionary.
+d_labitems <- read_csv(file = str_c(mimic_path, 'd_labitems.csv.gz'))
+labitem <- labevents_tab %>%
+  left_join(d_labitems, by = c("itemid")) %>%
+  select(c("itemid","label")) %>% unique() %>%
+  as.tibble() %>% print()
+
+
+d_items <- read_csv(file = str_c(mimic_path, 'd_items.csv.gz'))
+chartitem <- chart_tab %>%
+  left_join(d_items, by = c("itemid")) %>%
+  select(c("itemid","label")) %>% unique() %>%
+  as.tibble() %>% print()
+```
+
+Now add first lab measurements during ICU stay
+```{r}
+icu_final <- labevents_tab %>%
+#Keep subject_id and hadm_id of in unique table and add in intime
+  semi_join(icu_uniq, by = c("subject_id", "hadm_id")) %>%
+  left_join(select(icu_uniq, subject_id, hadm_id, intime), 
+            by = c("subject_id", "hadm_id")) %>%
+  filter(charttime >= intime) %>% 
+  group_by(subject_id, itemid) %>%
+  arrange(charttime, .by_group = TRUE) %>%
+  slice_head(n = 1) %>%
+  select(-charttime, -intime ) %>%
+  spread(key = itemid, value = valuenum) %>%
+  ungroup() %>%
+  rename_at(vars(as.character(labitem$itemid)), ~labitem$label) %>% print(Inf)
+```
+
+Then add vital measurements during ICU stay
+```{r}
+icu_final_2 <- chart_tab %>%
+#Keep subject_id and hadm_id of in unique table and add in intime
+  semi_join(icu_uniq, by = c("subject_id", "hadm_id")) %>%
+  left_join(select(icu_uniq, subject_id, hadm_id, intime), 
+            by = c("subject_id", "hadm_id")) %>%
+  filter(charttime >= intime) %>% 
+  group_by(subject_id, itemid) %>%
+  arrange(charttime, .by_group = TRUE) %>%
+  slice_head(n = 1) %>%
+  select(-charttime, -intime ) %>%
+  spread(key = itemid, value = valuenum) %>%
+  ungroup() %>%
+  rename_at(vars(as.character(chartitem$itemid)), ~chartitem$label) %>%
+  print(Inf)
+  
+```
+
+Join two tables and we are done!
+```{r}
+icu_f <- icu_uniq %>%
+  left_join(icu_final, by = c("subject_id", "hadm_id")) %>%
+  left_join(icu_final_2, by = c("subject_id", "hadm_id")) %>% 
+  group_by(subject_id) %>%
+  arrange(intime, .by_group = TRUE) %>%
+  slice_head(n = 1) %>%
+  ungroup() %>% as.tibble() %>%
+  print(Inf)
+```
+
+
+
+
+
