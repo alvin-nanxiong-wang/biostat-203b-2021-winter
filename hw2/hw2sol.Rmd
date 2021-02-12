@@ -31,7 +31,7 @@ if (str_detect(os, "Linux")) {
 
 Use tidyverse (ggpot2, dplyr) to explore the [MIMIC-IV](https://mimic-iv.mit.edu) data introduced in [homework 1](https://ucla-biostat203b-2021winter.github.io/hw/hw1/hw1.html).
 
-```{r}
+```{r, eval = FALSE}
 system(str_c("tree -s -L 2 ", shQuote(mimic_path)), intern = TRUE)
 ```
 
@@ -49,7 +49,7 @@ In this homework, we stick to the tidyverse.
 ```{r}
 #read.csv
 start_time <- Sys.time()
-read.csv(file = '/usr/203b-data/mimic-iv/core/admissions.csv.gz')
+test <-read.csv(file = str_c(mimic_path, 'admissions.csv.gz'))
 end_time <- Sys.time()
 
 end_time - start_time
@@ -58,7 +58,7 @@ end_time - start_time
 ```{r}
 #read_csv
 start_time <- Sys.time()
-read_csv(file = '/usr/203b-data/mimic-iv/core/admissions.csv.gz')
+test <- read_csv(file = str_c(mimic_path, 'admissions.csv.gz'))
 end_time <- Sys.time()
 
 end_time - start_time
@@ -67,7 +67,7 @@ end_time - start_time
 ```{r}
 #fread
 start_time <- Sys.time()
-fread(file = '/usr/203b-data/mimic-iv/core/admissions.csv.gz')
+test <- fread(file = str_c(mimic_path, 'admissions.csv.gz'))
 end_time <- Sys.time()
 
 end_time - start_time
@@ -181,22 +181,55 @@ ggplot(data = adm) +
 
 - number of admissions per patient  
 ```{r}
-sub <- as.data.frame(table(adm$subject_id))
-admFreq <- as.data.frame(table(sub$Freq))
+adm_rep <- adm %>% 
+  count(subject_id) %>%
+  mutate(n = (ifelse(n > 5, 5, n)))
+ggplot(adm_rep) + 
+      geom_bar(mapping = aes(x = n, fill = as.factor(n))) +
+      scale_x_discrete(name = "number of admissions per patient",
+                       limits = c("1", "2", "3", "4", ">=5"))
 ```
 
+
+- admission location 
 ```{r}
-ggplot(data = admFreq) + 
-      geom_bar(mapping = aes(x = Var1))
+ggplot(adm) + 
+      geom_bar(aes(x = admission_location, fill = admission_location)) +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
 
-- admission location  
 - discharge location  
+```{r}
+ggplot(adm) + 
+      geom_bar(aes(x = discharge_location, fill = discharge_location)) +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
 - insurance  
+```{r}
+ggplot(adm) + 
+      geom_bar(aes(x = insurance, fill = insurance))
+```
 - language  
+```{r}
+ggplot(adm) + 
+      geom_bar(aes(x = language, fill = language)) 
+```
 - martial status  
-- ethnicity  
+```{r}
+ggplot(adm) + 
+      geom_bar(aes(x = marital_status, fill = marital_status))
+```
+- ethnicity 
+```{r}
+ggplot(adm) + 
+      geom_bar(aes(x = ethnicity, fill = ethnicity)) + 
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
 - death 
+```{r}
+ggplot(adm) + 
+      geom_bar(aes(x = deathyear, fill = deathyear)) 
+```
 
 Note it is possible that one patient (uniquely identified by the `subject_id`) is admitted into hospital multiple times. When summarizing some demographic information, it makes sense to summarize based on unique patients. 
 
@@ -209,6 +242,24 @@ Explore `patients.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/core/patients
 ```{r}
 patient <- read_csv(file = str_c(mimic_path, 'patients.csv.gz'))
 ```
+```{r}
+patient %>%
+  select(gender) %>%
+  ggplot(aes(x = gender)) +
+  geom_bar(mapping = aes(fill = gender))
+```
+```{r}
+table(patient$anchor_age)
+```
+
+```{r}
+#Excluded anchor_age = 0 for bettwe visualization
+patient %>%
+  select(anchor_age) %>%
+  filter(anchor_age != 0) %>%
+  ggplot(aes(x = anchor_age)) +
+  geom_bar(mapping = aes(fill = anchor_age))
+```
 
 
 ## Q6. Lab results
@@ -217,9 +268,6 @@ patient <- read_csv(file = str_c(mimic_path, 'patients.csv.gz'))
 
 We are interested in the lab measurements of creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), glucose (50931), magnesium (50960), calcium (50893), and lactate (50813). Find the `itemid`s of these lab measurements from `d_labitems.csv.gz` and retrieve a subset of `labevents.csv.gz` only containing these items.
 ```{r}
-#mimic_p <- "/usr/203b-data/mimic-iv-derived-data/"
-#mimic_p <- "/Users/alvin/Documents/WI21/203B/mimic-iv/"
-
 if(!file.exists("labevents_icustays.csv.gz")){
   system.time(labevents_tab <- 
                 fread(str_c(mimic_path, "labevents_filtered_itemid.csv.gz")) %>%
@@ -247,21 +295,19 @@ We are interested in the vitals for ICU patients: heart rate, mean and systolic 
 `d_items.csv.gz` (<https://mimic-iv.mit.edu/docs/datasets/icu/d_items/>) is the dictionary for the `itemid` in `chartevents.csv.gz`. 
 
 ```{r}
-#mimic_p <- "/usr/203b-data/mimic-iv-derived-data/"
-#mimic_p <- "/Users/alvin/Documents/WI21/203B/mimic-iv/"
 if(!file.exists("chartevents_icustays.csv.gz")){
   system.time(chart_tab <- 
-                fread(str_c(mimic_path, "chartevents_filtered_itemid.csv.gz")) %>%
+                fread(str_c(mimic_path, "chartevents_filtered_itemid.csv.gz"))
+              %>%
                     rename(subject_id = V1, hadm_id = V2, stay_id = V3, 
-                           charttime = V4, itemid = V5, valuenum = V6))
-  
-  chart_tab %>%
+                           charttime = V4, itemid = V5, valuenum = V6)) 
+    chart_tab %>%
     semi_join(icu, by = c("subject_id", "hadm_id")) %>%
     fwrite("chartevents_icustays.csv.gz")
 }
 
 system.time(chart_tab <- fread("chartevents_icustays.csv.gz"))
-chart_tab %>%
+  chart_tab %>%
   as.tibble() %>%
   print(width = Inf)
 ```
