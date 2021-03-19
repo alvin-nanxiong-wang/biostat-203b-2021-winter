@@ -1,0 +1,232 @@
+---
+title: "Biostat 203B Homework 4"
+author: "Alvin Wang"
+subtitle: Due ~~Mar 12~~ Mar 19 @ 11:59PM
+output:
+  # ioslides_presentation: default
+  html_document:
+    toc: true
+    toc_depth: 4
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+                      
+Display machine information:
+```{r}
+sessionInfo()
+```
+Load database libraries and the tidyverse frontend:
+```{r}
+library(dplyr)
+library(mice)
+library(miceRanger)
+library(doParallel)
+library(fastDummies)
+library(glmnet)
+library(keras)
+```
+
+## Q1. Missing data
+
+Through the Shiny app developed in HW3, we observe abundant missing values in the MIMIC-IV ICU cohort we created. In this question, we use multiple imputation to obtain a data set without missing values.
+
+0. Read following tutorials on the R package miceRanger for imputation: <https://github.com/farrellday/miceRanger>, <https://cran.r-project.org/web/packages/miceRanger/vignettes/miceAlgorithm.html>.
+
+    A more thorough book treatment of the practical imputation strategies is the book [*_Flexible Imputation of Missing Data_*](https://stefvanbuuren.name/fimd/) by Stef van Buuren. 
+
+1. Explain the jargon MCAR, MAR, and MNAR.
+
+MCAR: If the probability of being missing is the same for all cases, then the data are said to be missing completely at random (MCAR). 
+
+MAR: If the probability of being missing is the same only within groups defined by the observed data, then the data are missing at random (MAR). 
+
+MNAR: MNAR (missing not at random) means that the probability of being missing varies for reasons that are unknown to us.
+
+2. Explain in a couple of sentences how the Multiple Imputation by Chained Equations (MICE) work.
+
+MICE imputes missing values in the variables of a data set by using a divide and conquer approach - in other words, by focusing on one variable at a time. Once the focus is placed on one variable, MICE uses all the other variables in the data set (or a sensibly chosen subset of these variables) to predict missingness in that variable. The prediction is based on a regression model, with the form of the model depending on the nature of the focus variable.
+
+
+3. Perform a data quality check of the ICU stays data. Discard variables with substantial missingness, say >5000 `NA`s. Replace apparent data entry errors by `NA`s.
+```{r}
+icu_cohort <- readRDS("icu_cohort.rds")
+
+#Remove variables we don't need
+icu_cohort <- icu_cohort %>% 
+  subset(select = -c(deathtime,edouttime,edregtime,dod,lactate,
+                     arterial_blood_pressure_systolic,
+                     arterial_blood_pressure_mean,subject_id,hadm_id,stay_id.x,
+                     stay_id.y,intime,outtime,admittime,dischtime))
+
+colSums(is.na(icu_cohort))
+
+#Replace data entries by NAs.
+rep_na <- function(x){
+  if(is.numeric(x)){
+    quantiles <- quantile(x, c(.025, .975),na.rm = TRUE)
+    x[x < quantiles[1]] <- NA
+    x[x > quantiles[2]] <- NA
+  }
+  return(x)
+}
+icu_cohort <- lapply(icu_cohort, rep_na) %>% as.data.frame()
+```
+
+4. Impute missing values by `miceRanger` (request $m=3$ datasets). This step is very computational intensive. Make sure to save the imputation results as a file.
+```{r, eval=FALSE}
+#Imputation
+# Set up back ends.
+cl <- makeCluster(8)
+registerDoParallel(cl)
+
+seqTime <- system.time(
+  icu_mice <- miceRanger(
+    icu_cohort
+    , m = 3
+    , returnModels = TRUE
+    , verbose = TRUE
+    , parallel = TRUE
+    , max.depth = 5
+  )
+)
+stopCluster(cl)
+registerDoSEQ()
+saveRDS(icu_mice, file = "icu_mice.rds")
+```
+
+5. Make imputation diagnostic plots and explain what they mean.
+```{r}
+icu_mice <- readRDS("icu_mice.rds")
+plotDistributions(icu_mice, var = 'allNumeric')
+```
+
+There are the distribution plots of the imputed values. The red lines stand for
+the densities of the original data while the black lines stand for the densities
+of the imputed values.
+```{r}
+plotCorrelations(icu_mice, vars = 'allNumeric')
+```
+
+This function shows a boxplot of the correlations between imputed values in 
+every combination of datasets.
+```{r}
+plotVarConvergence(icu_mice, vars = 'allNumeric')
+```
+
+From the convergence plots, we can tell whether daata converge to the true 
+theoretical mean (given the information that exists in the dataset). 
+We can see if the imputed data converged, or if we need to run more iterations.
+```{r}
+plotModelError(icu_mice, vars = 'allNumeric')
+```
+
+Modell OOB error plots give us a way to  determine model error without cross 
+validation. Each model returns the OOB accuracy for classification, and 
+r-squared for regression.
+
+6. Obtain a complete data set by averaging the 3 imputed data sets.
+```{r}
+#define variables of interest
+dataList <- completeData(icu_mice)
+vars = c("gender", "age_at_adm", "marital_status", "ethnicity", "bicarbonate",
+         "calcium", "chloride", "creatinine", "glucose", "magnesium", 
+         "potassium", "sodium", "hematocrit", "wbc", "heart_rate", 
+         "non_invasive_blood_pressure_systolic", 
+         "non_invasive_blood_pressure_mean", "respiratory_rate",
+         "temperature_fahrenheit", "death_30")
+dataset1 <- dataList$Dataset_1 %>% subset(select = vars)
+data1 <- dummy_cols(dataset1,
+           remove_first_dummy = TRUE,
+           remove_selected_columns = TRUE)
+dataset2 <- dataList$Dataset_2 %>% subset(select = vars)
+data2 <- dummy_cols(dataset2,
+                    remove_first_dummy = TRUE,
+                    remove_selected_columns = TRUE)
+dataset3 <- dataList$Dataset_3 %>% subset(select = vars)
+data3 <- dummy_cols(dataset3,
+                    remove_first_dummy = TRUE,
+                    remove_selected_columns = TRUE)
+#obtain average of 3 imputed datasets
+final_dataset <- (data1 + data2 + data3) / 3
+final_dataset <- final_dataset %>% 
+  mutate_at(vars("marital_status_MARRIED": "marital_status_WIDOWED"), round)
+```
+
+
+
+## Q2. Predicting 30-day mortality
+
+Develop at least two analytic approaches for predicting the 30-day mortality of patients admitted to ICU using demographic information (gender, age, marital status, ethnicity), first lab measurements during ICU stay, and first vital measurements during ICU stay. For example, you can use (1) logistic regression (`glm()` function), (2) logistic regression with lasso penalty (glmnet package), (3) random forest (randomForest package), or (4) neural network.
+
+1. Partition data into 80% training set and 20% test set. Stratify partitioning according the 30-day mortality status.
+```{r}
+set.seed(101) # Set Seed so that same sample can be reproduced in future also
+# Now Selecting 80% of data as sample from total 'n' rows of the data  
+sample <- sample.int(n = nrow(final_dataset), 
+                     size = floor(.8*nrow(final_dataset)), replace = F)
+train <- final_dataset[sample, ]
+test  <- final_dataset[-sample, ]
+train_x <- train %>% subset(select = -c(death_30_Yes)) %>% as.matrix()
+train_y <- train$death_30_Yes %>% as.matrix()
+test_x <- test %>% subset(select = -c(death_30_Yes)) %>% as.matrix()
+test_y <- test$death_30_Yes %>% as.matrix()
+```
+
+2. Train the models using the training set.
+```{r}
+#GLM lasso
+glmmod <- cv.glmnet(train_x, y=train_y, alpha=1, family="binomial")
+plot(glmmod, xvar="lambda")
+
+
+#MLP
+model <- keras_model_sequential()
+# Add layers to the model
+model %>% 
+  layer_dense(units = 32, activation = 'relu',
+              bias_initializer = initializer_constant(0.01),
+              kernel_initializer = "uniform", input_shape = c(27)) %>% 
+  layer_dropout(rate = 0.4) %>% 
+  layer_dense(units = 16, activation = 'relu',
+              bias_initializer = initializer_constant(0.01),
+              kernel_initializer = "uniform") %>%
+  layer_dropout(rate = 0.3) %>%
+  layer_dense(units = 1, activation  = "sigmoid")
+# Compile the model
+model %>% compile(
+  loss = 'binary_crossentropy',
+  optimizer = 'adam',
+  metrics = 'accuracy'
+)
+# Fit the model 
+system.time({
+  history <- model %>% fit(
+  as.matrix(train_x), 
+  as.matrix(train$death_30_Yes), 
+  epochs = 100, 
+  batch_size = 128,
+  class_weight = list("0" = 1, "1" = 6),
+  validation_split = 0.3
+  )
+})
+plot(history)
+#model %>% evaluate(as.matrix(test1), as.matrix(test$death_30_Yes))
+#results <- model %>% predict_classes(as.matrix(test1))
+#table(results)
+```
+
+3. Compare model prediction performance on the test set.
+
+Performance of GLM lasso:
+```{r}
+pre <- predict(glmmod, newx = test_x, type = "response", s = min(glmmod$lambda))
+pre <- round(pre)
+performance <- 1 - (sum(abs(pre - test_y)) / length(pre)) %>% print()
+```
+Performance of MLP:
+```{r}
+model %>% evaluate(test_x, test_y)
+```
+
