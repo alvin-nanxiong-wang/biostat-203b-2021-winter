@@ -27,3 +27,4 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 pride_and_prejudice.txt
+.DS_Store
